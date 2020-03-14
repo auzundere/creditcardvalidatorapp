@@ -6,7 +6,7 @@
 
 1. mvn spring-boot:run
 2. Go to a browser and type http://localhost:8080/ (to see all credit cards in the hardcoded cards)
-[
+```[
    {
       "number":"4788 3845 3855 2446",
       "expirationDate":"08/22"
@@ -36,8 +36,9 @@
       "expirationDate":"08/22"
    }
 ]
+```
 3. /{cardType} -> Ex. cardType = visa, mastercard, discovery, diner, etc... http://localhost:8080/visa (it gets the card numbers from the inventory(hard coded))
-[
+```[
    {
       "validCards":[
          {
@@ -73,10 +74,11 @@
       ]
    }
 ]
+```
 4. /{number}/{month}/{year} -> number -> card number (with or w/o space, dash etc), month  -> 2 digits month like 08, year -> 2 digits year like 20
     Example: http://localhost:8080/4788-3845-3855-2447/04/20
     It will return 
-    [
+   ``` [
         {
             "validCards": [
                     {
@@ -86,3 +88,4 @@
             ]
         }
     ]
+```
