@@ -1,0 +1,241 @@
+openapi: 3.0.2
+info:
+   title: User Management API
+   version: 1.0.0-SNAPSHOT
+   description: User and Identity API API.  API to query user details for 3rdEye users.
+   termsOfService: https://www.3rdeyecam.com/terms-of-use-privacy/
+   contact:
+      name: 3rd Eye Support
+      url: https://www.3rdeyecam.com/contact-us/
+      email: suport@3rdeyecam.com
+servers:
+-  url: https://test-api.3rdeyecam.com
+   description: TEST Server
+-  url: https://stage-api.3rdeyecam.com
+   description: STAGE Server
+paths:
+   /userinfo:
+      get:
+         tags:
+         - Identity
+         responses:
+            '200':
+               content:
+                  application/json:
+                     schema:
+                        $ref: '#/components/schemas/UserInfo'
+               description: OK
+         operationId: get-userinfo
+         summary: GET endpoint current user
+         description: Service to support OAuth identity, used to get userinfo for the current logged in user for user profile
+            info.
+   /users/{id}:
+      get:
+         tags:
+         - User
+         responses:
+            '200':
+               content:
+                  application/json:
+                     schema:
+                        $ref: '#/components/schemas/User'
+               description: OK
+         operationId: get-users-id
+         summary: GET  user by id
+         description: Return user by id.  This is primative service to retrieve user by id in database.
+      parameters:
+      -  name: id
+         description: user id
+         schema:
+            format: int32
+            minimum: 0
+            type: integer
+            example: 23
+         in: path
+         required: true
+   /users:
+      get:
+         tags:
+         - User
+         parameters:
+         -  name: pagination
+            schema:
+               $ref: '#/components/schemas/Pagination'
+            in: query
+            required: true
+         responses:
+            '200':
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items:
+                           $ref: '#/components/schemas/User'
+               description: OK
+         operationId: get-users
+         summary: GET endpoint user list
+         description: Retrieve list of users
+components:
+   schemas:
+      Pagination:
+         type: object
+         properties:
+            page:
+               description: zero-based page index, must not be negative.
+               default: 0
+               minimum: 0
+               type: integer
+            pageSize:
+               description: the size of the page to be returned, must be greater than 0
+               default: 10
+               maximum: 1000
+               minimum: 1
+               type: integer
+            sortField:
+               description: has to be part of the 'get' schema, not all fields are sortable
+               type: string
+            sortDir:
+               description: sort direction
+               enum:
+               - asc
+               - desc
+               type: string
+      User:
+         title: User
+         required:
+         - id
+         - email
+         - firstName
+         - lastName
+         type: object
+         properties:
+            id:
+               type: integer
+            email:
+               format: email
+               description: user's email address
+               type: string
+               example: john.smith@example.com
+            firstName:
+               type: string
+               example: John
+            lastName:
+               type: string
+            tenantId:
+               type: integer
+            roles:
+               type: array
+               items:
+                  enum:
+                  - USER
+                  - ADMINISTRATOR
+                  - DISPATCHER
+                  - FLEET_VIEW
+                  - REVIEWER
+                  - REVIEWER_READ_ONLY
+                  - COACH
+                  - MANAGER
+                  - TROUBLESHOOTER
+                  - INSTALLER
+                  - LIVE_STREAMING
+                  - TELEMETRY
+                  - TENANT_ADMINISTRATOR
+                  - CAN_CLEAR_INFRACTIONS
+                  - FLEET_CONFIG
+                  - VIDEO_REQUEST
+                  - VEHICLE_HEALTH
+                  - COMPANY_CONFIG
+                  type: string
+            status:
+               enum:
+               - TERMINATED
+               - ACTIVE
+               - INACTIVE
+               - AWAITING_ACTIVATION
+               type: string
+         x-tags:
+         - Identity
+      UserInfo:
+         description: Represent more detailed information about the use.
+         required:
+         - user
+         - tenantName
+         - tenantId
+         - divisions
+         type: object
+         properties:
+            user:
+               $ref: '#/components/schemas/User'
+               description: details of the user
+            tenantId:
+               format: int32
+               description: id of tenant associated with this user
+               type: integer
+            tenantName:
+               description: tenant name
+               type: string
+            divisions:
+               description: division access by user
+               type: array
+               items:
+                  $ref: '#/components/schemas/Division'
+         example:
+            user:
+               id: 86
+               email: ''
+               firstName: Bill
+               lastName: Smith
+               tenantId: 7
+               roles:
+               - TENANT_ADMINISTRATOR
+               - VEHICLE_HEALTH
+               status: AWAITING_ACTIVATION
+            tenantId: 7
+            tenantName: ABC Waste
+            divisions:
+            -  id: 94
+               parentId: 2
+               divisionName: ABC Waste North Div
+            -  id: 62
+               parentId: 72
+               divisionName: ABC Waste South Div
+      Division:
+         title: Root Type for Division
+         description: divsion info
+         type: object
+         properties:
+            id:
+               format: int32
+               description: division id
+               type: integer
+            parentId:
+               format: int32
+               description: division id of parent.  If null, this is the parent.
+               type: integer
+            divisionName:
+               description: division name
+               type: string
+         example:
+            id: 12
+            parentId: 2
+            divisionName: ABC North Division
+   securitySchemes:
+      3rdEyeOAuth:
+         flows:
+            authorizationCode:
+               authorizationUrl: http://localhost:8080/auth/realms/TEST-RM/protocol/openid-connect/auth
+               tokenUrl: http://localhost:8080/auth/realms/TEST-RM/protocol/openid-connect/toke
+               refreshUrl: http://localhost:8080/auth/realms/TEST-RM/protocol/openid-connect/toke
+               scopes:
+                  userinfo: access to user info api
+                  user: access to users
+         type: oauth2
+security:
+-  3rdEyeOAuth:
+   - userinfo
+   - user
+tags:
+-  name: User
+   description: User API
+-  name: Identity
+   description: User information and oauth identity management
